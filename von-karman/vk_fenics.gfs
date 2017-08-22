@@ -1,0 +1,60 @@
+4 3 GfsSimulation GfsBox GfsGEdge {} {
+    # Scale [-1/2, -1/2+4] to [0, 2.2] and [-1/2, -1/2+1] to [0, 0.41]
+    
+    Solid (pow(x/0.55, 2) + pow(y/0.41, 2) - pow(0.05/(0.55*0.55+0.41*0.41), 2))
+    MetricStretch {} {sx = 0.55 sy = 0.41}
+    Refine 5
+    RefineSolid 11
+    
+
+    
+    Time {t=0 iend=0}
+    OutputSimulation {start=end} fenics.gfs
+}
+GfsBox {
+  left = Boundary {
+    BcDirichlet U 1
+  }
+  top  =  Boundary {
+    BcDirichlet U 0
+    BcDirichlet V 0
+  }
+  bottom  =  Boundary {
+    BcDirichlet U 0
+    BcDirichlet V 0
+  }
+}
+GfsBox {
+  top  =  Boundary {
+    BcDirichlet U 0
+    BcDirichlet V 0
+  }
+  bottom  =  Boundary {
+    BcDirichlet U 0
+    BcDirichlet V 0
+  }
+}
+GfsBox {
+  top  =  Boundary {
+    BcDirichlet U 0
+    BcDirichlet V 0
+  }
+  bottom  =  Boundary {
+    BcDirichlet U 0
+    BcDirichlet V 0
+  }
+}
+GfsBox {
+  right = BoundaryOutflow
+  top  =  Boundary {
+    BcDirichlet U 0
+    BcDirichlet V 0
+  }
+  bottom  =  Boundary {
+    BcDirichlet U 0
+    BcDirichlet V 0
+  }
+}
+1 2 right
+2 3 right
+3 4 right

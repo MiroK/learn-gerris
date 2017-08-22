@@ -1,0 +1,89 @@
+4 3 GfsSimulation GfsBox GfsGEdge {} {
+  Refine 5
+  Solid (x*x + y*y - 0.125*0.125)
+  Time {end = 10}
+  SourceViscosity 1./400.
+  AdaptVorticity { istep = 1 } { maxlevel = 6 cmax = 1e-2 }
+
+  OutputAdaptStats { istep=10 } stdout
+  OutputProjectionStats { istep = 10 } stdout
+  OutputTime {istep = 10} stdout
+
+  # Pressure solve
+  ProjectionParams {
+      tolerance = 1e-4
+      nrelax = 5
+      erelax = 1
+      minlevel = 0
+      nitermax = 100
+      nitermin = 1
+      omega = 1.0
+      function = 0
+  }
+
+  ApproxProjectionParams {
+      tolerance = 1e-4
+      nrelax = 5
+      erelax = 1
+      minlevel = 0
+      nitermax = 100
+      nitermin = 1
+      omega = 1.0
+      function = 0
+  }
+
+  # Advection solve
+  AdvectionParams {
+      cfl = 0.6
+      scheme = godunov
+      moving_order = 1
+  }
+  OutputSimulation { start = end } vk_tutorial_out.gts 
+}
+GfsBox {
+  left = Boundary {
+    BcDirichlet U 1
+  }
+  top  =  Boundary {
+    BcDirichlet U 0
+    BcDirichlet V 0
+  }
+  bottom  =  Boundary {
+    BcDirichlet U 0
+    BcDirichlet V 0
+  }
+}
+GfsBox {
+  top  =  Boundary {
+    BcDirichlet U 0
+    BcDirichlet V 0
+  }
+  bottom  =  Boundary {
+    BcDirichlet U 0
+    BcDirichlet V 0
+  }
+}
+GfsBox {
+  top  =  Boundary {
+    BcDirichlet U 0
+    BcDirichlet V 0
+  }
+  bottom  =  Boundary {
+    BcDirichlet U 0
+    BcDirichlet V 0
+  }
+}
+GfsBox {
+  right = BoundaryOutflow
+  top  =  Boundary {
+    BcDirichlet U 0
+    BcDirichlet V 0
+  }
+  bottom  =  Boundary {
+    BcDirichlet U 0
+    BcDirichlet V 0
+  }
+}
+1 2 right
+2 3 right
+3 4 right
