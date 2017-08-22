@@ -1,0 +1,151 @@
+#  [1][2][3][4][5]
+#        [6][7][8]
+##
+
+
+8 9 GfsSimulation GfsBox GfsGEdge {} {
+
+  Time { t=0 end=300}
+
+  # Use an initial refinement of 6 levels (i.e. 2^6=64x64)
+  Refine 6
+
+  # Physics
+  # Set a viscosity source term on the velocity vector with x-component U
+  # The Reynolds number is Re = L*U/Nu = 1*1/1e-3 = 1000
+  SourceDiffusion {} U 1e-3
+  SourceDiffusion {} V 1e-3
+
+  # Adaptivity
+  AdaptVorticity { istep = 1 } {maxlevel=6 cmax=1E-2}
+  OutputAdaptStats { istep=10 } stdout
+
+  # Stopping
+  EventStop { istep = 10 } U 5E-3 DU
+  OutputScalarNorm { istep = 10 } stdout { v = DU }
+  OutputScalarNorm { istep = 10 } du_stat_adapt.dat { v = DU }
+
+  # Pressure solve
+  ProjectionParams {
+      tolerance = 1e-4
+      nrelax = 5
+      erelax = 1
+      minlevel = 0
+      nitermax = 100
+      nitermin = 1
+      omega = 1.0
+      function = 0
+  }
+
+  ApproxProjectionParams {
+      tolerance = 1e-4
+      nrelax = 5
+      erelax = 1
+      minlevel = 0
+      nitermax = 100
+      nitermin = 1
+      omega = 1.0
+      function = 0
+  }
+
+  # Advection solve
+  AdvectionParams {
+      cfl = 0.6
+      scheme = godunov
+      moving_order = 1
+  }
+
+  OutputProjectionStats { istep = 10 } stdout
+
+  # Plotting on the fly by pipe
+  # OutputSimulation { istep = 10 } stdout
+  OutputLocation { start = end} profile.dat profile_pos.dat
+  OutputSimulation { start = end } end.gfs
+
+}
+# (1) Inflow bcs
+GfsBox {
+    top = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    bottom = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    left = Boundary {
+	BcDirichlet U (0.25 - y*y)
+	BcDirichlet V 0
+    }
+}
+# (2) No slip on top and bottom
+GfsBox {
+    top = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    bottom = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+}
+# (3) No slip for top
+GfsBox {
+    top = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+}
+# (4) No slip for top
+GfsBox {
+    top = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+   }
+}
+# (5) No slip for top, outflow for right
+GfsBox {
+    top = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    right = BoundaryOutflow
+}
+# (6) No slip for left and bottom
+GfsBox {
+    bottom = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    left = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+}
+# (7) No slip for bottom
+GfsBox {
+    bottom = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+}
+# (8) No slip for bottom, outflow for right
+GfsBox {
+    bottom = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    right = BoundaryOutflow
+}
+# Connectivity graph of the cells
+1 2 right
+2 3 right
+3 4 right
+4 5 right
+#
+3 6 bottom
+4 7 bottom
+5 8 bottom
+#
+6 7 right
+7 8 right

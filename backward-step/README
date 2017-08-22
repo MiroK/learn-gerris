@@ -1,0 +1,5 @@
+to get paralle run for 4 cpus I use
+
+   gerris2D -b 4 bs_uniform_in.gfs > bs_uniform_p4_in.gfs
+
+this will tag the 8 existing domains.
