@@ -1,0 +1,6 @@
+For parallel version of gfs in I run
+
+    gerris2D -s 1 input.gfs > parallel_input.gfs
+
+to split the one box that defines the cavity domain once to and thus get 4
+boxes. Then we do mpirun -np 4 gerris2D parallel_input.gfs

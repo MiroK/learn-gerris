@@ -1,0 +1,297 @@
+# Gerris Flow Solver 2D version 1.3.2 (131206-155120)
+4 4 GfsSimulation GfsBox GfsGEdge { rootlevel = 1 x = -0.25 y = -0.25 version = 131206 } {
+  GfsTime { i = 0 t = 0 end = 300 }
+  GfsRefine 6
+  GfsSourceDiffusion { istep = 1 } U 1e-3 {
+  tolerance = 1e-06
+  nrelax    = 4
+  erelax    = 1
+  minlevel  = 0
+  nitermax  = 100
+  nitermin  = 1
+  weighted  = 0
+  beta      = 1
+}
+  GfsSourceDiffusion { istep = 1 } V 1e-3 {
+  tolerance = 1e-06
+  nrelax    = 4
+  erelax    = 1
+  minlevel  = 0
+  nitermax  = 100
+  nitermin  = 1
+  weighted  = 0
+  beta      = 1
+}
+  GfsOutputLocation { start = end } xprof_uni {
+0 -0.5 0
+0 -0.49 0
+0 -0.48 0
+0 -0.47 0
+0 -0.46 0
+0 -0.45 0
+0 -0.44 0
+0 -0.43 0
+0 -0.42 0
+0 -0.41 0
+0 -0.4 0
+0 -0.39 0
+0 -0.38 0
+0 -0.37 0
+0 -0.36 0
+0 -0.35 0
+0 -0.34 0
+0 -0.33 0
+0 -0.32 0
+0 -0.31 0
+0 -0.3 0
+0 -0.29 0
+0 -0.28 0
+0 -0.27 0
+0 -0.26 0
+0 -0.25 0
+0 -0.24 0
+0 -0.23 0
+0 -0.22 0
+0 -0.21 0
+0 -0.2 0
+0 -0.19 0
+0 -0.18 0
+0 -0.17 0
+0 -0.16 0
+0 -0.15 0
+0 -0.14 0
+0 -0.13 0
+0 -0.12 0
+0 -0.11 0
+0 -0.1 0
+0 -0.09 0
+0 -0.08 0
+0 -0.07 0
+0 -0.06 0
+0 -0.05 0
+0 -0.04 0
+0 -0.03 0
+0 -0.02 0
+0 -0.01 0
+0 0 0
+0 0.01 0
+0 0.02 0
+0 0.03 0
+0 0.04 0
+0 0.05 0
+0 0.06 0
+0 0.07 0
+0 0.08 0
+0 0.09 0
+0 0.1 0
+0 0.11 0
+0 0.12 0
+0 0.13 0
+0 0.14 0
+0 0.15 0
+0 0.16 0
+0 0.17 0
+0 0.18 0
+0 0.19 0
+0 0.2 0
+0 0.21 0
+0 0.22 0
+0 0.23 0
+0 0.24 0
+0 0.25 0
+0 0.26 0
+0 0.27 0
+0 0.28 0
+0 0.29 0
+0 0.3 0
+0 0.31 0
+0 0.32 0
+0 0.33 0
+0 0.34 0
+0 0.35 0
+0 0.36 0
+0 0.37 0
+0 0.38 0
+0 0.39 0
+0 0.4 0
+0 0.41 0
+0 0.42 0
+0 0.43 0
+0 0.44 0
+0 0.45 0
+0 0.46 0
+0 0.47 0
+0 0.48 0
+0 0.49 0
+0 0.5 0
+}
+  GfsOutputLocation { start = end } yprof_uni {
+-0.5 0 0
+-0.49 0 0
+-0.48 0 0
+-0.47 0 0
+-0.46 0 0
+-0.45 0 0
+-0.44 0 0
+-0.43 0 0
+-0.42 0 0
+-0.41 0 0
+-0.4 0 0
+-0.39 0 0
+-0.38 0 0
+-0.37 0 0
+-0.36 0 0
+-0.35 0 0
+-0.34 0 0
+-0.33 0 0
+-0.32 0 0
+-0.31 0 0
+-0.3 0 0
+-0.29 0 0
+-0.28 0 0
+-0.27 0 0
+-0.26 0 0
+-0.25 0 0
+-0.24 0 0
+-0.23 0 0
+-0.22 0 0
+-0.21 0 0
+-0.2 0 0
+-0.19 0 0
+-0.18 0 0
+-0.17 0 0
+-0.16 0 0
+-0.15 0 0
+-0.14 0 0
+-0.13 0 0
+-0.12 0 0
+-0.11 0 0
+-0.1 0 0
+-0.09 0 0
+-0.08 0 0
+-0.07 0 0
+-0.06 0 0
+-0.05 0 0
+-0.04 0 0
+-0.03 0 0
+-0.02 0 0
+-0.01 0 0
+0 0 0
+0.01 0 0
+0.02 0 0
+0.03 0 0
+0.04 0 0
+0.05 0 0
+0.06 0 0
+0.07 0 0
+0.08 0 0
+0.09 0 0
+0.1 0 0
+0.11 0 0
+0.12 0 0
+0.13 0 0
+0.14 0 0
+0.15 0 0
+0.16 0 0
+0.17 0 0
+0.18 0 0
+0.19 0 0
+0.2 0 0
+0.21 0 0
+0.22 0 0
+0.23 0 0
+0.24 0 0
+0.25 0 0
+0.26 0 0
+0.27 0 0
+0.28 0 0
+0.29 0 0
+0.3 0 0
+0.31 0 0
+0.32 0 0
+0.33 0 0
+0.34 0 0
+0.35 0 0
+0.36 0 0
+0.37 0 0
+0.38 0 0
+0.39 0 0
+0.4 0 0
+0.41 0 0
+0.42 0 0
+0.43 0 0
+0.44 0 0
+0.45 0 0
+0.46 0 0
+0.47 0 0
+0.48 0 0
+0.49 0 0
+0.5 0 0
+}
+  GfsOutputSimulation { start = end } end.gfs { }
+  GfsEventStop { istep = 10 } U 0.0001 DU
+  GfsOutputScalarNorm { istep = 10 } stdout { v =  DU }
+  GfsOutputProjectionStats { istep = 10 } stdout
+  GfsOutputPPM { start = end } { convert -colors 256 ppm:- velocity.eps } { v =  Velocity }
+  GfsOutputSimulation { start = end } end.gfs { }
+  GfsPhysicalParams { g = 1 L = 1 }
+  GfsAdvectionParams {
+  cfl      = 0.8
+  gradient = gfs_center_gradient
+  flux     = gfs_face_velocity_advection_flux
+  average  = 1
+  scheme   = godunov
+}
+  GfsApproxProjectionParams {
+  tolerance = 0.001
+  nrelax    = 4
+  erelax    = 1
+  minlevel  = 0
+  nitermax  = 100
+  nitermin  = 1
+  weighted  = 0
+  beta      = 1
+}
+  GfsProjectionParams {
+  tolerance = 0.001
+  nrelax    = 4
+  erelax    = 1
+  minlevel  = 0
+  nitermax  = 100
+  nitermin  = 1
+  weighted  = 0
+  beta      = 1
+}
+}
+GfsBox { id = 1 pid = 2 size = 1024 x = -0.25 y = -0.25 z = 0 left = GfsBoundary {
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} bottom = GfsBoundary {
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} }
+GfsBox { id = 2 pid = 0 size = 1024 x = -0.25 y = 0.25 z = 0 left = GfsBoundary {
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} top = GfsBoundary {
+GfsBcDirichlet U 1
+GfsBcDirichlet V 0
+} }
+GfsBox { id = 3 pid = 1 size = 1024 x = 0.25 y = 0.25 z = 0 right = GfsBoundary {
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} top = GfsBoundary {
+GfsBcDirichlet U 1
+GfsBcDirichlet V 0
+} }
+GfsBox { id = 4 pid = 3 size = 1024 x = 0.25 y = -0.25 z = 0 right = GfsBoundary {
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} bottom = GfsBoundary {
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} }
+1 4 right
+2 1 bottom
+2 3 right
+3 4 bottom
