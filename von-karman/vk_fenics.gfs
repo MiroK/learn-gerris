@@ -1,19 +1,65 @@
 4 3 GfsSimulation GfsBox GfsGEdge {} {
-    # Scale [-1/2, -1/2+4] to [0, 2.2] and [-1/2, -1/2+1] to [0, 0.41]
+    Global{
+	static double D = 0.1;  // m
+	static double H = 0.41;  // m
+	static double Um = 1.5;  // m/s
+    }
     
-    Solid (pow(x/0.55, 2) + pow(y/0.41, 2) - pow(0.05/(0.55*0.55+0.41*0.41), 2))
+    # Map [-1/2, -1/2+4] x[-1/2, -1/2+1] to [0, 0.41] x [0, 2.2] 
     MetricStretch {} {sx = 0.55 sy = 0.41}
+    MapTransform {tx = 0.275 ty = 0.205}
+    # The cylinder
+    Solid (pow(x-0.2, 2) + pow(y-0.2, 2) - pow(0.05, 2))
+    # Fine mesh near the cylinder
     Refine 5
-    RefineSolid 11
-    
+    RefineSolid 12
 
-    
-    Time {t=0 iend=0}
-    OutputSimulation {start=end} fenics.gfs
+    # Need no slip on the solid, otherwise u.n = 0 + zero tangential stress
+    SurfaceBc U Dirichlet 0
+    SurfaceBc V Dirichlet 0
+
+    # Viscosity
+    SourceViscosity 1E-3
+
+    # Passive tracer
+    VariableTracer T
+
+    # Adaptivity based on tracer as well
+    AdaptVorticity { istep = 1 } {maxlevel=7 cmax=1E-2}
+    AdaptGradient { istep = 1 } {maxlevel=7 cmax=1E-2} T
+    OutputAdaptStats { istep=10 } stderr
+
+    # Stopping
+    Time { end=8 dtmax=1E-1}
+    OutputLocation { istep=1 } probes.dat probesXYZ
+
+    # Pressure solve
+    ProjectionParams {
+	tolerance = 1e-3
+	nrelax = 5
+    }
+
+    ApproxProjectionParams {
+	tolerance = 1e-3
+	nrelax = 5
+    }
+
+    # Advection solve
+    AdvectionParams {
+	cfl = 0.5
+	scheme = godunov
+	moving_order = 1
+    }
+
+  OutputProjectionStats { istep = 10 } stderr
+  OutputTime { istep = 10 } stderr
+  # Plotting
+  OutputSimulation { istep = 10 } turek_%ld.gfs
 }
 GfsBox {
   left = Boundary {
-    BcDirichlet U 1
+      BcDirichlet U (4*Um*y*(H-y)*sin(M_PI*t/8)/H/H)
+      BcDirichlet V 0
   }
   top  =  Boundary {
     BcDirichlet U 0
