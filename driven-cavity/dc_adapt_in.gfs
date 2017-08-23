@@ -26,7 +26,11 @@
   OutputLocation { start = end } yprof_adapt yprofile
 
   OutputSimulation { start = end } end.gfs
-  OutputSimulation { start = end } end.vtk {format=VTK}
+  OutputSimulation { istep = 1 } output_%ld.gfs
+  OutputSimulation { istep = 1 } OUTPUT_%ld.vtk {format=VTK}
+  # NOTE: the alternative is to convert from gfs as follows
+  # gerris2D -e "OutputSimulation { istep = 1 } converted_30.vtk { format = VTK }" output_30.gfs > /dev/null
+  #
 
   # Stops the simulation if the maximum of the absolute value of the
   # difference between the current U field and the U field 10 timesteps
