@@ -1,0 +1,31 @@
+1 0 GfsSimulation GfsBox GfsGEdge {} {
+  GfsTime { iend = 10 }
+  GfsRefine 4
+  GfsRefineSolid 8
+  # GfsSolid wiki.gts { scale = 1.001 }
+  GfsSolid test.gts { scale = 1.001 }
+  
+  GfsSourceViscosity 1e-3
+
+  GfsOutputBoundaries {} boundaries
+  
+  GfsOutputTime { istep = 1 } stdout
+  GfsOutputScalarStats { step = 0.1 } stdout { v = P }
+  GfsOutputTiming { start = end } stdout
+  GfsOutputSimulation { istep = 1 } result%2.1f.vtk {format=VTK}
+
+}
+# wiki
+# GfsBox { left = GfsBoundaryInflowConstant 1 right = GfsBoundaryOutflow }
+
+# NOTE: gerris3D has -s option, and only -p for partitioning to 2^arg procs
+# so the pipe for running on 2 cpus was
+#   gerris3D -s 1 serial > parallel       
+#   gerris3D -p 1 parallel > PARALLEL
+#   gerris3D PARALLEL
+#
+# NOTE: meshes
+# wiki.gts see http://gfs.sourceforge.net/wiki/images/a/a8/Doppelbogen.gts
+# test.gts obtained from stl by
+# stl2gts < test.stl | transform --revert --normalize > test.gts
+GfsBox { front = GfsBoundaryInflowConstant 1 back = GfsBoundaryOutflow }
