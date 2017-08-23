@@ -1,7 +1,7 @@
 1 0 GfsSimulation GfsBox GfsGEdge {} {
 
   # Stop the simulation at t = 300 if convergence has not been reached before
-  Time { end = 300 }
+  Time { iend = 30 }
 
   # Use an initial refinement of 6 levels (i.e. 2^6=64x64)
   Refine 6
@@ -26,6 +26,7 @@
   OutputLocation { start = end } yprof_adapt yprofile
 
   OutputSimulation { start = end } end.gfs
+  OutputSimulation { start = end } end.vtk {format=VTK}
 
   # Stops the simulation if the maximum of the absolute value of the
   # difference between the current U field and the U field 10 timesteps
