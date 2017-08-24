@@ -1,0 +1,22 @@
+1 1 GfsSimulation GfsBox GfsGEdge {} {
+  Time { end = 1.66481717925811447992 }
+  ApproxProjectionParams { tolerance = 1e-6 }
+  ProjectionParams { tolerance = 1e-6 }
+  Refine 6
+  VariableTracerVOFHeight T
+
+  # Line below is for direct imposition of gravity acceleration
+  Source {} V 50
+  VariableCurvature K T
+  SourceTension {} T 1 K
+
+  SourceDiffusion {} U 0.0182571749236
+  SourceDiffusion {} V 0.0182571749236
+  PhysicalParams { alpha = 1./(T + 0.1*(1. - T)) }
+  InitFraction {} T (y - 0.01*cos (2.*M_PI*x))
+  OutputScalarNorm { step = .00225584983639310905 } {
+      awk '{printf ("%g %g\n", $3*16.032448313657, $9); fflush(stdout); }' > gwave-full
+  } { v = (T > 1e-6 && T < 1. - 1e-6 ? Y : 0.) }
+}
+GfsBox {}
+1 1 right

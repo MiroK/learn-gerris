@@ -1,0 +1,29 @@
+1 0 GfsSimulation GfsBox GfsGEdge {} {
+    
+    Time { end = 8 }
+    Refine 6
+    RefineSurface 10 (ellipse(-0.5, -0.5, 0.4, 0.4))
+
+    ApproxProjectionParams { tolerance = 1e-6 }
+    ProjectionParams { tolerance = 1e-6 }
+    # Stokes
+    AdvectionParams { scheme = none }
+
+    VariableTracerVOFHeight T1
+    VariableCurvature K T1
+    SourceTension T1 1 K
+    SourceViscosity 0.8
+
+    InitFraction T1 (ellipse(-0.5, -0.5, 0.4, 0.4))
+    Init {} { Tref = T1 }
+
+    AdaptGradient { istep = 1 } { cmax = 1e-6 maxlevel = 8 } T1
+    EventStop { istep = 10 } T1 1E-7 DT
+    OutputScalarNorm {istep = 1} stdout {v = DT}
+    # OutputProjectionStats { istep=1 } stdout
+    OutputSimulation { start = end } output.gfs { depth = 8 }
+}
+GfsBox {
+  top = Boundary
+  left = Boundary
+}

@@ -1,0 +1,34 @@
+3 5 GfsSimulation GfsBox GfsGEdge {} {
+  Time { end = 1.58928694288774963184 }
+  ApproxProjectionParams { tolerance = 1e-6 }
+  ProjectionParams { tolerance = 1e-6 }
+  Refine floor(5 + 1 - (5 - 2)*fabs(y)/1.5)
+  VariableTracerVOFHeight T
+  # MAterial params based on filtered!
+  VariableFiltered T1 T 1
+  VariableCurvature K T
+  SourceTension T 1 K
+  VariablePosition Y T y
+  Global {
+      #define VAR(T,min,max)   (min + CLAMP(T,0,1)*(max - min))
+      #define RHO(T)            VAR(T, 1.2/1000., 1.)
+      #define MU(T)             VAR(T, 1.8e-5/1.003e-3, 1.)
+  }
+  PhysicalParams { alpha = 1./RHO(T1) }
+  SourceViscosity 0.0182571749236*MU(T1)
+  InitFraction T (y - 0.01*cos (2.*M_PI*x))
+  OutputScalarNorm { step = 0.00198785108553814829 } {
+      awk '{printf ("%g %g\n", $3*15.7402, $9); fflush(stdout); }' > wave-5
+  } { v = (T > 0. && T < 1. ? Y : 0.) }
+  OutputPPM { istep = 2 } { ppm2mpeg > t5.mpg } {
+    min = 0 max = 1 v = T
+  }
+}
+GfsBox {}
+GfsBox {}
+GfsBox {}
+1 1 right
+2 2 right
+3 3 right
+1 2 top
+1 3 bottom
