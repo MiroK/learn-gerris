@@ -1,0 +1,116 @@
+2 1 GfsSimulation GfsBox GfsGEdge {} {
+
+    Global{
+	double air_density = 1;
+	double water_density = 100;
+	double air_viscosity = 1E-3;
+	double water_viscosity = 1E-5;
+	
+	double tracer_init(double x, double y){
+	    if(y > 0.5)
+	       return (pow(y-1, 2) + pow(x, 2) - 0.25*0.25) < 0 ? 1. : 0.;
+	    else
+		return y < 0 ? 1. : 0.;
+	}
+
+	double var(double T, double min, double max){
+	    return min + CLAMP(T, 0, 1)*(max - min);
+	}
+	
+	double set_density(double t)
+	{
+	    return var(t, air_density, water_density);
+	}
+
+	double set_viscosity(double t)
+	{
+	    return var(t, air_viscosity, water_viscosity);
+	}
+    }
+    
+    Refine 4
+    # Surface tracking
+    VariableTracerVOFHeight T1
+    # Refinement based on grad tracer + where the interface is
+    AdaptFunction { istep = 1 } {
+	cmax = 0
+	minlevel = 4
+	maxlevel = 8
+    } (T1 > 0 && T1 < 1)
+
+    AdaptGradient { istep = 1 } {
+	cmax = 1E-2
+	minlevel = 4
+	maxlevel = 8
+    } T1
+
+    # Things start from rest
+    Init {} {
+	U = 0
+	V = 0
+	T1 = tracer_init(x, y)
+    }
+
+    # TODO: Variable density and viscosity for the two fluids
+    VariableFiltered T1f T1 1
+    PhysicalParams { alpha = 1./set_density(T1f) }
+    SourceViscosity set_viscosity(T1f)
+
+    # Gravity
+    Source {} V -9.81
+    
+    # TODO: surface tension effects
+    # TODO: bubble detect
+    # TODO: realistic params + know what to expect
+    
+    # Solver setup
+    ApproxProjectionParams { tolerance = 1e-3 }
+    ProjectionParams { tolerance = 1e-3 }
+
+    # Simulation setup
+    Time { end = 0.8 dtmax=5E-3 }
+
+    # Outputs 
+    OutputProjectionStats { istep = 10 } stdout
+    OutputTime {istep = 1} stdout
+    
+    OutputPPM { istep = 1 } { ppm2mpeg > t.mpg } {
+	min = 0 max = 1 v = T1
+    }
+
+    OutputPPM { start = 0 } { convert -colors 256 ppm:- t.eps } {
+	min = 0 max = 1 v = T1
+    }
+
+    OutputSimulation { start = end } output.gfs
+}
+# Aquarium
+GfsBox {
+    bottom = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    left = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    right = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+}
+GfsBox {
+    top = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    left = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    right = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+}
+1 2 top
