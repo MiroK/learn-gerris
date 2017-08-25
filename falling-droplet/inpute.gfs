@@ -51,7 +51,8 @@
 	T1 = tracer_init(x, y)
     }
 
-    # TODO: Variable density and viscosity for the two fluids
+    # Variable density and viscosity for the two fluids
+    # Now it is based on filtered tracer but this needs to be tested
     VariableFiltered T1f T1 1
     PhysicalParams { alpha = 1./set_density(T1f) }
     SourceViscosity set_viscosity(T1f)
@@ -74,15 +75,17 @@
     OutputProjectionStats { istep = 10 } stdout
     OutputTime {istep = 1} stdout
     
-    OutputPPM { istep = 1 } { ppm2mpeg > t.mpg } {
+    OutputPPM { istep = 5 } { ppm2mpeg > t.mpg } {
 	min = 0 max = 1 v = T1
     }
 
-    OutputPPM { start = 0 } { convert -colors 256 ppm:- t.eps } {
+    OutputPPM { start = 0 istep = 10} { convert -colors 256 ppm:- t%ld.eps } {
 	min = 0 max = 1 v = T1
     }
 
-    OutputSimulation { start = end } output.gfs
+    OutputDropletSums { istep = 5 } drops  { v = T1*dV   } T1
+
+    OutputSimulation { istep = 5 } output.gfs
 }
 # Aquarium
 GfsBox {
