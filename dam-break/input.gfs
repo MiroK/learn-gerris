@@ -77,7 +77,7 @@
     ProjectionParams { tolerance = 1e-3 }
 
     # Simulation setup
-    Time { end = 5.0 dtmax=5E-3 iend=2}
+    Time { end = 5.0 dtmax=5E-3 }
 
     # Outputs 
     OutputProjectionStats { istep = 10 } stdout
@@ -87,28 +87,34 @@
     EventScript { start=end} {
 	if [ $GfsPid -le 0 ]
 	then
-	    echo "CLEANING UP"
 	    SIGMA__=SIGMA
 	    FILTER__=FILTER
 	    MINLEVEL__=MINLEVEL
             SAVEDIR="./data/sigma""$SIGMA__""-filter""$FILTER__""-level-$MINLEVEL__"
 
+	    echo "CLEANING UP sigma/filter/level ""$SIGMA__""$FILTER__""$MINLEVEL__" "SEE $SAVEDIR FOR RESULTS"
+
 	    if [ ! -d $SAVEDIR ]
 	    then
-		mkdir $SAVEDIR
+		mkdir -p $SAVEDIR
 	    fi
 
-	    mv *.mpg $SAVEDIR
-	    mv output*.gfs $SAVEDIR
-	    mv drops*.txt $SAVEDIR
+	    # mv *.mpg $SAVEDIR
+	    mv drops-MINLEVEL-SIGMA-FILTER.txt $SAVEDIR
+	    mv output-MINLEVEL-SIGMA-FILTER-*.vtk $SAVEDIR
+	    mv times-MINLEVEL-SIGMA-FILTER.txt $SAVEDIR
 	fi
     }
     
-    OutputPPM { step = 0.1 } { ppm2mpeg > t-MINLEVEL-SIGMA-FILTER.mpg } {
-	min = 0 max = 1 v = T1
-    }
-    OutputDropletSums { istep = 5 } drops-MINLEVEL-SIGMA-FILTER-%ld.txt  { v = T1*dV   } T1
-    OutputSimulation { step = 0.1 } output-MINLEVEL-SIGMA-FILTER-%g.gfs
+    #
+    # OutputPPM { step = 0.1 } { ppm2mpeg > t-MINLEVEL-SIGMA-FILTER.mpg } {
+    #	min = 0 max = 1 v = T1
+    # }
+    # Has time
+    OutputDropletSums { istep = 5 } drops-MINLEVEL-SIGMA-FILTER.txt  { v = T1*dV   } T1
+    # By step count, for time see times
+    OutputSimulation { start=0 step = 0.05 } output-MINLEVEL-SIGMA-FILTER-%ld.vtk { format=VTK }
+    OutputTime { start=0 step=0.05 } times-MINLEVEL-SIGMA-FILTER.txt
 }
 # Aquarium
 GfsBox {
