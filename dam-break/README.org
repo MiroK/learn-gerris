@@ -1,0 +1,20 @@
+** TODO 
+   Setup of the problem is taken from the paper by Guermond et al
+
+     __An conservative anti-diffusion technique for the level set method__
+
+   section 11.2. Therein, no surface tension is included. I am interested
+   in the following matrix of setups where the surface is either includeded
+   (1) or excluded (0) and rho, mu are based on filtered (1) or unfilted (0)
+   VOF function.
+
+   |      | Tension | Tension |
+   |------+---------+---------|
+   | \rho | (1, 1)  | (1, 0)  |
+   | \rho | (0, 1)  | (0, 0   |
+
+   I will use adaptivity guided by VOF gradient and vorticity criteria, 
+   CFL=0.5. For mesh convergence the coarsest and finest level of adaptivity
+   will be modified. Keep track of bubbles.
+  
+   

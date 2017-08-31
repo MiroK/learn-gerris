@@ -1,0 +1,142 @@
+2 1 GfsSimulation GfsBox GfsGEdge {} {
+
+    Global{
+	double air_density = 1;
+	double water_density = 1000;
+	double air_viscosity = 1E-2;
+	double water_viscosity = 1;
+	double gravity = -1;
+	double sigma = 78E-3*SIGMA;
+	
+	double tracer_init(double x, double y){
+	    return ((x > 0.35*0.5) && (x < 0.65*0.5) && (y < (-0.5*0.5+0.35))) ? 1. : 0.;
+	}
+
+	double var(double T, double Tf, double min, double max){
+	    if(FILTER > 0.5)  // True for 1.0 use filter
+	      return min + CLAMP(Tf, 0, 1)*(max - min);
+	    else
+	      return min + CLAMP(T, 0, 1)*(max - min);
+	}
+	
+	double set_density(double T, double Tf)
+	{
+	    return var(T, Tf, air_density, water_density);
+	}
+
+	double set_viscosity(double T, double Tf)
+	{
+	    return var(T, Tf, air_viscosity, water_viscosity);
+	}
+    }
+    MetricStretch {} { sy=0.5 sx=0.5}
+    Refine MINLEVEL
+    
+
+    GfsAdvectionParams {                                                            
+	cfl = 0.5                                                                  
+    }     
+    
+    # Surface tracking
+    VariableTracerVOFHeight T1
+    # Refinement based on grad tracer + where the interface is
+    AdaptFunction { istep = 1 } {
+	cmax = 0
+	minlevel = MINLEVEL
+	maxlevel = MINLEVEL + 4
+    } (T1 > 0 && T1 < 1)
+
+    AdaptGradient { istep = 1 } {
+	cmax = 1E-2
+	minlevel = MINLEVEL
+	maxlevel = MINLEVEL + 4
+    } T1
+
+    # Things start from rest
+    Init {} {
+	U = 0
+	V = 0
+	T1 = tracer_init(x, y)
+    }
+
+    # Variable density and viscosity for the two fluids
+    # Now it is based on filtered tracer but this needs to be tested
+    VariableFiltered T1f T1 1
+    PhysicalParams { alpha = 1./set_density(T1, T1f) }
+    SourceViscosity set_viscosity(T1, T1f)
+
+    # Gravity
+    Source {} V gravity
+
+    # BAsed on unfiltered
+    VariableCurvature K T1
+    SourceTension T1 sigma K
+    
+    # Solver setup
+    ApproxProjectionParams { tolerance = 1e-3 }
+    ProjectionParams { tolerance = 1e-3 }
+
+    # Simulation setup
+    Time { end = 5.0 dtmax=5E-3 iend=2}
+
+    # Outputs 
+    OutputProjectionStats { istep = 10 } stdout
+    OutputTime {istep = 1} stdout
+
+    # Cleanup
+    EventScript { start=end} {
+	if [ $GfsPid -le 0 ]
+	then
+	    echo "CLEANING UP"
+	    SIGMA__=SIGMA
+	    FILTER__=FILTER
+	    MINLEVEL__=MINLEVEL
+            SAVEDIR="./data/sigma""$SIGMA__""-filter""$FILTER__""-level-$MINLEVEL__"
+
+	    if [ ! -d $SAVEDIR ]
+	    then
+		mkdir $SAVEDIR
+	    fi
+
+	    mv *.mpg $SAVEDIR
+	    mv output*.gfs $SAVEDIR
+	    mv drops*.txt $SAVEDIR
+	fi
+    }
+    
+    OutputPPM { step = 0.1 } { ppm2mpeg > t-MINLEVEL-SIGMA-FILTER.mpg } {
+	min = 0 max = 1 v = T1
+    }
+    OutputDropletSums { istep = 5 } drops-MINLEVEL-SIGMA-FILTER-%ld.txt  { v = T1*dV   } T1
+    OutputSimulation { step = 0.1 } output-MINLEVEL-SIGMA-FILTER-%g.gfs
+}
+# Aquarium
+GfsBox {
+    bottom = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    left = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    top = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+}
+GfsBox {
+    top = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    right = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    bottom = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+}
+1 2 right
