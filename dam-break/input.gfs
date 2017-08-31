@@ -3,13 +3,13 @@
     Global{
 	double air_density = 1;
 	double water_density = 1000;
-	double air_viscosity = 1E-2;
+	double air_viscosity = 1.8E-2;
 	double water_viscosity = 1;
 	double gravity = -1;
 	double sigma = 78E-3*SIGMA;
 	
 	double tracer_init(double x, double y){
-	    return ((x > 0.35*0.5) && (x < 0.65*0.5) && (y < (-0.5*0.5+0.35))) ? 1. : 0.;
+	    return ((x > 0.10) && (x < 0.40) && (y < (-0.5*0.5+0.35))) ? 1. : 0.;
 	}
 
 	double var(double T, double Tf, double min, double max){
@@ -83,8 +83,18 @@
     OutputProjectionStats { istep = 10 } stdout
     OutputTime {istep = 1} stdout
 
+    #
+    # OutputPPM { step = 0.1 } { ppm2mpeg > t-MINLEVEL-SIGMA-FILTER.mpg } {
+    #	min = 0 max = 1 v = T1
+    # }
+    # Has time
+    OutputDropletSums { istep = 5 } drops-MINLEVEL-SIGMA-FILTER.txt  { v = T1*dV   } T1
+    # By step count, for time see times
+    OutputSimulation { start=0 step = 0.05 } output-MINLEVEL-SIGMA-FILTER-%ld.vtk { format=VTK }
+    OutputTime { start=0 step=0.05 } times-MINLEVEL-SIGMA-FILTER.txt
+
     # Cleanup
-    EventScript { start=end} {
+    EventScript { start=end } {
 	if [ $GfsPid -le 0 ]
 	then
 	    SIGMA__=SIGMA
@@ -105,16 +115,6 @@
 	    mv times-MINLEVEL-SIGMA-FILTER.txt $SAVEDIR
 	fi
     }
-    
-    #
-    # OutputPPM { step = 0.1 } { ppm2mpeg > t-MINLEVEL-SIGMA-FILTER.mpg } {
-    #	min = 0 max = 1 v = T1
-    # }
-    # Has time
-    OutputDropletSums { istep = 5 } drops-MINLEVEL-SIGMA-FILTER.txt  { v = T1*dV   } T1
-    # By step count, for time see times
-    OutputSimulation { start=0 step = 0.05 } output-MINLEVEL-SIGMA-FILTER-%ld.vtk { format=VTK }
-    OutputTime { start=0 step=0.05 } times-MINLEVEL-SIGMA-FILTER.txt
 }
 # Aquarium
 GfsBox {
