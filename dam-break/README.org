@@ -1,4 +1,6 @@
-** TODO 
+** DONE [#A] 
+   CLOSED: [2017-09-01 fr. 18:03]
+
    Setup of the problem is taken from the paper by Guermond et al
 
      __An conservative anti-diffusion technique for the level set method__
@@ -11,10 +13,21 @@
    |      | Tension | Tension |
    |------+---------+---------|
    | \rho | (1, 1)  | (1, 0)  |
-   | \rho | (0, 1)  | (0, 0   |
+   | \rho | (0, 1)  | (0, 0)  |
 
    I will use adaptivity guided by VOF gradient and vorticity criteria, 
    CFL=0.5. For mesh convergence the coarsest and finest level of adaptivity
    will be modified. Keep track of bubbles.
+
+   Some lessons learned are
+   1. setting min(coarsest) level for adaptivity is okay, but restricting the
+      finest level leads to problems - for then instead of refining to meet CFL 
+      re restrict the time step. Program can crash then!
+     
+   2. There is obviously a difference between flow w/ and w/out surface tension.
+      What you can see from the results is that setting material properties based 
+      on filtered/notfilted VOF matters as well. If I take paper of Guermond as truth
+      then using filtered results reproduces it (in particular the pinch off a 
+      dropplet) more faithfully. If unfiltered VOF is used no droplets are created.
   
    
