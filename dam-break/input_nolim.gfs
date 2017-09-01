@@ -93,6 +93,13 @@
     OutputSimulation { start=0 step = 0.05 } output-MINLEVEL-SIGMA-FILTER-%ld.vtk { format=VTK }
     OutputTime { start=0 step=0.05 } times-MINLEVEL-SIGMA-FILTER.txt
 
+    # Some idea about cell counts
+    OutputAdaptStats { istep = 1 } adapt-MINLEVEL-SIGMA-FILTER.txt
+    # Checking mass balance
+    OutputScalarSum { istep = 1 } mass-MINLEVEL-SIGMA-FILTER.txt { v=set_density(T1, T1f)*T1}
+    OutputScalarSum { istep = 1 } kinetic-MINLEVEL-SIGMA-FILTER.txt { v = Velocity2*set_density(T1, T1f)*T1 }
+    OutputScalarSum { istep = 1 } potential-MINLEVEL-SIGMA-FILTER.txt { v = (y-0.25)*gravity*set_density(T1, T1f)*T1 }
+								      
     # Cleanup
     EventScript { start=end } {
 	if [ $GfsPid -le 0 ]
@@ -113,6 +120,12 @@
 	    mv drops-MINLEVEL-SIGMA-FILTER.txt $SAVEDIR
 	    mv output-MINLEVEL-SIGMA-FILTER-*.vtk $SAVEDIR
 	    mv times-MINLEVEL-SIGMA-FILTER.txt $SAVEDIR
+	    
+	    mv adapt-MINLEVEL-SIGMA-FILTER.txt $SAVEDIR
+
+	    mv mass-MINLEVEL-SIGMA-FILTER.txt $SAVEDIR
+	    mv kinetic-MINLEVEL-SIGMA-FILTER.txt $SAVEDIR
+	    mv potential-MINLEVEL-SIGMA-FILTER.txt $SAVEDIR
 	fi
     }
 }
