@@ -1,4 +1,4 @@
-1 1 GfsSimulation GfsBox GfsGEdge {} {
+3 5 GfsSimulation GfsBox GfsGEdge {} {
 
     Global{
 	double air_density = 1.;
@@ -6,10 +6,10 @@
 	double gravity = -9.81;
 
 	double var(double T, double Tf, double min, double max){
-	    /*if(FILTER > 0.5)  // True for 1.0 use filter
-	    return min + CLAMP(Tf, 0, 1)*(max - min);
-	    else*/
-	    return min + CLAMP(T, 0, 1)*(max - min);
+	    if(FILTER > 0.5)  // True for 1.0 use filter
+	        return min + CLAMP(Tf, 0, 1)*(max - min);
+	    else
+		return min + CLAMP(T, 0, 1)*(max - min);
 	}
 	
 	double set_density(double T, double Tf)
@@ -59,6 +59,8 @@
 	    stokes5->depth = depth;
 	    stokes5->gravity = gravity;
 	    stokes5->kH = k*wave_height;
+
+	    // printf("kH/2 = %g\n", stokes5->kH/2);
 	    stokes5->eps = eps;
 	    stokes5->S = S;
 	    stokes5->x0 = x0;
@@ -120,6 +122,7 @@
 
 	double tracer_init(Stokes5 *stokes5, double x, double y)
 	{
+		// printf("%g %g\n", y, GET_HEIGHT(stokes5, 0.0, x));
 		return (y > GET_HEIGHT(stokes5, 0.0, x)) ? 0. : 1.;
 	}
 
@@ -163,15 +166,15 @@
 
 	Stokes5 wave;
 	const double wave_length=1.;
-	const double wave_height=0.12;
+	const double wave_height=AMPL;
 	const double current=0.;
-	const double depth=0.5;
+	const double depth=2.5;
 	const double XX0=0.5;
 	const double YY0=0.5;
     }
-    Refine LEVEL
-    
+    Refine 8
 
+    
     GfsAdvectionParams {                                                            
 	cfl = 0.5                                                                  
     }     
@@ -179,32 +182,33 @@
     # Surface tracking
     VariableTracerVOFHeight T1
     # Refinement based on grad tracer + where the interface is
-    #AdaptFunction { istep = 1 } {
-    #    cmax = 0
-    #    minlevel = 4
-    #    # NOTE maxlebel is no infty
-    #} (T1 > 0 && T1 < 1)
+    AdaptFunction { istep = 1 } {
+        cmax = 0
+        minlevel = 6
+        # NOTE maxlebel is no infty
+    } (T1 > 0 && T1 < 1)
 
-    #AdaptGradient { istep = 1 } {
-    #    cmax = 1E-2
-    #    minlevel = 4
-    #    # NOTE maxlevel is now infty
-    #} T1
+    AdaptGradient { istep = 1 } {
+        cmax = 1E-4
+        minlevel = 6
+        # NOTE maxlevel is now infty
+    } T1
 
     # Things start from rest
     Init {} {
-	U = set_stokes5_properties(&wave, wave_length, wave_height, current, depth, -gravity, XX0, YY0);
+	U = set_stokes5_properties(&wave, wave_length, wave_height, current, depth, -gravity, XX0, YY0)
 
         T1 = tracer_init(&wave, x, y)             
 	U = SET_U(&wave, 0.0, x, y)
 	V = SET_V(&wave, 0.0, x, y)
     }
+    
 
     # Variable density and viscosity for the two fluids
-    # Now it is based on filtered tracer but this needs to be tested
+    # Now it is based on filtered tracer but this needs to be tested, smeared once
     VariableFiltered T1f T1 1
     PhysicalParams { alpha = 1./set_density(T1, T1f) }
-     MapTransform {tx = 0.5 ty = 0.5}	     
+     MapTransform {tx = 0.5 ty = -1.5}	     
     # Gravity
     Source {} V gravity
     
@@ -218,27 +222,63 @@
     # Outputs 
     OutputProjectionStats { istep = 10 } stdout
     OutputTime {istep = 1} stdout
+    
+    # Cleanup
+    EventScript { start=end } {
+	if [ $GfsPid -le 0 ]
+	then
+	    FILTER__=FILTER
+	    AMPPL__=AMPL
+            SAVEDIR="./data/filter""$FILTER__""-adapt""-ampl""$AMPL__"
 
+	    echo "SEE $SAVEDIR FOR RESULTS"
+
+	    if [ ! -d $SAVEDIR ]
+	    then
+	    	mkdir -p $SAVEDIR
+	    fi
+
+	    mv ./data/output-adapt-FILTER-AMPL-*.vtk $SAVEDIR
+	    for f in times yposition xposition mass kinetic potential;
+	    do
+		mv ./data/$f-adapt-FILTER-AMPL.txt $SAVEDIR;
+	    done
+	fi
+    }    
+    
     # By step count, for time see times
-    OutputSimulation { start=0 step = 0.05 } ./data/output-LEVEL-%ld.vtk { format=VTK }
-    OutputTime { start=0 step=0.05 } ./data/times-LEVEL.txt
+    OutputSimulation { start=0 step = 0.05 } ./data/output-adapt-FILTER-AMPL-%ld.vtk { format=VTK }
+    OutputTime { start=0 step=0.05 } ./data/times-adapt-FILTER-AMPL.txt
 
     VariablePosition {} Y T1 y
+    VariablePosition {} X T1 x
     # Maximum of Y coords that are on the interface is ... the height :)
-    OutputScalarNorm { istep = 1} ./data/position-LEVEL.txt  { v = (T1 > 1e-6 && T1 < 1. - 1e-6 ? y : 0.) }
+    OutputScalarNorm { istep = 1 } ./data/yposition-adapt-FILTER-AMPL.txt  { v = (T1 > 1e-6 && T1 < 1. - 1e-6 ? y : 0.) }
+    OutputScalarNorm { istep = 1 } ./data/xposition-adapt-FILTER-AMPL.txt  { v = (T1 > 1e-6 && T1 < 1. - 1e-6 ? x : 0.) }
+
+    OutputScalarSum { istep = 1 } ./data/mass-adapt-FILTER-AMPL.txt { v=set_density(T1, T1f)*T1}
+    OutputScalarSum { istep = 1 } ./data/kinetic-adapt-FILTER-AMPL.txt { v = Velocity2*set_density(T1, T1f)*T1 }
+    OutputScalarSum { istep = 1 } ./data/potential-adapt-FILTER-AMPL.txt { v = (y - YY0)*gravity*set_density(T1, T1f)*T1 }
 
     # Some idea about cell counts
     # OutputAdaptStats { istep = 1 } adapt.txt
  }
-# Aquarium
+# Bottom
 GfsBox {
     bottom = Boundary {
 	BcDirichlet U 0
-	BcNeumann P 0
     }
-    top = Boundary {
-	BcDirichlet U 0
-	BcNeumann P 0
+}
+# Middle
+GfsBox{}
+# Top
+GfsBox{
+    top = Boundary{
+    	BcDirichlet U 0
     }
 }
 1 1 right
+2 2 right
+3 3 right
+1 2 top
+2 3 top
