@@ -1,0 +1,236 @@
+Define FILTER 1
+
+10 10 GfsSimulation GfsBox GfsGEdge {} {
+    Global{
+	double air_density = 1.;
+	double water_density = 1000.;
+
+        double air_viscosity = 1E-5;  // dynamic
+        double water_viscosity = 1E-3;
+        
+        double gravity = -9.81;
+        // Note that this effects coordinate shift
+        double depth = 1;
+        double amplitude = AMPLITUDE;
+        
+	double var(double T, double Tf, double min, double max){
+	    if(FILTER > 0.5)  // True for 1.0 use filter
+	        return min + CLAMP(Tf, 0, 1)*(max - min);
+	    else
+		return min + CLAMP(T, 0, 1)*(max - min);
+	}
+	
+	double set_density(double T, double Tf)
+	{
+	    return var(T, Tf, air_density, water_density);
+	}
+
+	double set_viscosity(double T, double Tf)
+	{
+	    return var(T, Tf, air_viscosity, water_viscosity);
+	}
+        
+        // Init profile following Ramaswamy @ JFP 90, 396-430
+	double get_height(double d, double H, double t, double x)
+	{
+            const double g = fabs(gravity); 
+            const double c = sqrt(g*d*(1. + H/d));
+  	    double eta = d + H/pow(cosh(sqrt(3*H/4/pow(d, 3.))*(x-c*t)), 2);
+            return eta;
+	}
+
+	double tracer_init(double d, double H, double x, double y)
+	{
+	    return (y > get_height(d, H, 0.0, x)) ? 0. : 1.;
+	}
+
+        double get_U(double d, double H, double t, double x, double y)
+        {
+            const double g = fabs(gravity); 
+            const double c = sqrt(g*d*(1. + H/d));
+  	    double surface = get_height(d, H, t, x);
+            const double arg = sqrt(3*H/4/pow(d, 3))*(x-c*t);
+            double u = sqrt(g*d)*H/d/pow(cosh(arg), 2);
+            
+            return (y > surface) ? 0.0 : u;
+        }
+
+        double get_V(double d, double H, double t, double x, double y)
+        {
+            const double g = fabs(gravity); 
+            const double c = sqrt(g*d*(1. + H/d));
+  	    double surface = get_height(d, H, t, x);
+
+            const double arg = sqrt(3*H/4/pow(d, 3))*(x-c*t);
+            double v = sqrt(3*g*d)*pow(H/d, 1.5)*(y/d)/pow(cosh(arg), 2)*tanh(arg);
+            
+            return (y > surface) ? 0.0 : v;
+        }
+    }
+    # Shift coords to have left wall at x=0 and bottom at y = 0.
+    # This are axis for which Ramaswamy has the formulas
+    MapTransform{tx=-3.5 ty=0.5}
+    
+    #Refine ( (fabs((y-depth) - get_height(depth, amplitude, 0.0, x)) < 0.1) ? 6 : 3)
+    GfsAdvectionParams {                                                            
+	cfl = 0.5
+        gradient = gfs_center_superbee_gradient
+        # gfs_center_gradient second-order centered estimate (no limiter), 
+        # (default) gfs_center_van_leer_gradient van Leer generalised minmod limiter (θ = 2), 
+        # gfs_center_minmod_gradient minmod limiter, 
+        # gfs_center_sweby_gradient sweby limiter (β = 1.5), 
+        # gfs_center_superbee_gradient
+    }
+    # Surface tracking
+    VariableTracerVOFHeight T1
+    # Refinement based on grad tracer + where the interface is
+
+    # Gravity
+    Source {} V gravity
+
+    # Solver setup
+    ApproxProjectionParams { tolerance = 1e-3 }
+    ProjectionParams { tolerance = 1e-3 }
+
+    Refine( ((y > depth-0.1) && (y < depth + amplitude+0.1)) ? 7 : 4)
+    # Things start from rest
+    Init {} {
+        T1 = tracer_init(depth, amplitude, x, y)             
+	U = get_U(depth, amplitude, 0.0, x, y)
+	V = get_V(depth, amplitude, 0.0, x, y)
+    }
+
+    # Variable density and viscosity for the two fluids
+    # Now it is based on filtered tracer but this needs to be tested, smeared once
+    VariableFiltered T1f T1 1
+    PhysicalParams { alpha = 1./set_density(T1, T1f)
+                     L=2
+                   }
+    SourceViscosity set_viscosity(T1, T1f)
+    
+    # Simulation setup
+    Time { end=10 dtmax=5E-3 }
+
+    # By step count, for time see times
+    # Outputs 
+    OutputProjectionStats { istep = 11 } stdout
+    OutputTime {istep = 1} stdout
+    
+    # By step count, for time see times
+    OutputSimulation { start=0 step=0.01 } ./data/fields-AMPLITUDE-%ld.vtk { format=VTK }
+    OutputTime { start=0 istep=1 } ./data/times-AMPLITUDE.txt
+
+    VariablePosition {} Y T1 y
+    VariablePosition {} X T1 x
+    # Maximum of Y coords that are on the interface is ... the height :)
+    OutputScalarNorm { istep = 1} ./data/yposition-AMPLITUDE.txt  { v = (T1 > 1e-6 && T1 < 1. - 1e-6 ? y : 0.) format=%.16e}
+    OutputParticle { istep = 1} ./data/xposition-AMPLITUDE.txt  0 1 0
+    # In both water and air
+    OutputScalarSum { istep = 1} ./data/mass-AMPLITUDE.txt { v=set_density(T1, T1f)*T1 format=%.16e}
+    OutputScalarSum { istep = 1} ./data/kinetic-AMPLITUDE.txt { v = Velocity2*set_density(T1, T1f)*T1 format=%.16e}
+    OutputScalarSum { istep = 1} ./data/potential-AMPLITUDE.txt { v = y*gravity*set_density(T1, T1f)*T1 format=%.16e}
+
+    # Some idea about cell counts
+    OutputAdaptStats { istep = 1 } ./data/adaptstats-AMPLITUDE.txt
+
+    # Cleanup
+    EventScript { start=end } {
+	if [ $GfsPid -le 0 ]
+	then
+	    AMPL__=AMPLITUDE
+            SAVEDIR="./data/ampl""$AMPL__"
+
+	    echo "SEE $SAVEDIR FOR RESULTS"
+
+	    if [ ! -d $SAVEDIR ]
+	    then
+	    	mkdir -p $SAVEDIR
+	    fi
+
+	    mv ./data/fields-AMPLITUDE-*.vtk $SAVEDIR
+	    for f in times yposition xposition mass kinetic potential adaptstats;
+	    do
+		mv ./data/$f-AMPLITUDE.txt $SAVEDIR;
+	    done
+	fi
+    }
+
+    m4_ifelse(ADAPTIVITY, 1, AdaptGradient { istep = 1 } {
+                     cmax = 1E-4
+                     minlevel = 4
+                     # NOTE maxlevel is now infty
+                 } T1
+              AdaptVorticity { istep = 1 } { minlevel=4 cmax = 1e-2 }
+             )
+}
+#
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+1 2 right
+2 3 right
+3 4 right
+4 5 right
+5 6 right
+6 7 right
+7 8 right
+8 9 right
+9 10 right
+10 1 right
