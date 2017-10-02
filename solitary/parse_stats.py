@@ -73,7 +73,7 @@ def plot_mass_csrv(path):
     ax1.tick_params('y', colors='b')
 
     ax2 = ax1.twinx()
-    ax2.plot(time, error, 'rd.')
+    ax2.plot(time, error, 'rd-')
     ax2.set_ylabel('|Sum (chi * rho * dV) - m0|/m0', color='r')
     ax2.tick_params('y', colors='r')
 
@@ -99,8 +99,8 @@ def plot_energy_csrv(kin_path, pot_path):
     potential *= -1
     
     fig, ax1 = plt.subplots()
-    l1, =ax1.plot(kin_time, kinetic, 'bo-', label='E_K')
-    l2, = ax1.plot(pot_time, potential, 'gx-', label='E_P')
+    l1, = ax1.plot(kin_time, kinetic, 'bo-', label='E_K')
+    l2, = ax1.plot(pot_time, potential-potential[0], 'gx-', label='E_P')
     ax1.set_xlabel('time')
     # Make the y-axis label, ticks and tick labels match the line color.
     ax1.set_ylabel('Sum (chi * rho * v ^ 2 * dV); Sum (chi * g * rho * y * dV)')
@@ -109,7 +109,7 @@ def plot_energy_csrv(kin_path, pot_path):
         return fig
 
     if np.linalg.norm(np.array(kin_time) - np.array(pot_time), np.inf) < 1E-13:
-        energy = np.array(kinetic) - potential
+        energy = np.array(kinetic) - (potential - potential[0])
         ax2 = ax1.twinx()
         ax2.plot(kin_time, energy, 'r.')
         ax2.set_ylabel('E_K+E_P', color='r')
@@ -221,10 +221,10 @@ def parse_amplitude(dir_path, ampl, save=False):
     ax1.set_ylabel('ampl', color='b')
     ax1.tick_params('y', colors='b')
 
-    ax2 = ax1.twinx()
-    ax2.plot(timex, x, 'r.')
-    ax2.set_ylabel('x', color='r')
-    ax2.tick_params('y', colors='r')
+    # ax2 = ax1.twinx()
+    # ax2.plot(timex, x, 'r.')
+    # ax2.set_ylabel('x', color='r')
+    # ax2.tick_params('y', colors='r')
 
     fig.tight_layout()    
     

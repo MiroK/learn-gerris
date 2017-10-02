@@ -1,6 +1,6 @@
 Define FILTER 1
 
-40 60 GfsSimulation GfsBox GfsGEdge {} {
+10 10 GfsSimulation GfsBox GfsGEdge {} {
     Global{
 	double air_density = 1.;
 	double water_density = 1000.;
@@ -10,7 +10,6 @@ Define FILTER 1
         
         double gravity = -9.81;
         // Note that this effects coordinate shift
-
         double depth = 1;
         double amplitude = AMPLITUDE;
         
@@ -70,7 +69,7 @@ Define FILTER 1
     }
     # Shift coords to have left wall at x=0 and bottom at y = 0.
     # This are axis for which Ramaswamy has the formulas
-    MapTransform{tx=-9.5 ty=0.5}
+    MapTransform{tx=-3.5 ty=0.5}
     
     #Refine ( (fabs((y-depth) - get_height(depth, amplitude, 0.0, x)) < 0.1) ? 6 : 3)
     GfsAdvectionParams {                                                            
@@ -93,7 +92,7 @@ Define FILTER 1
     ApproxProjectionParams { tolerance = 1e-3 }
     ProjectionParams { tolerance = 1e-3 }
 
-    Refine( ((y > depth-0.1) && (y < depth + amplitude+0.1)) ? 6 : 3)
+    Refine( ((y > depth-0.1) && (y < depth + amplitude+0.1)) ? 7 : 4)
     # Things start from rest
     Init {} {
         T1 = tracer_init(depth, amplitude, x, y)             
@@ -104,7 +103,9 @@ Define FILTER 1
     # Variable density and viscosity for the two fluids
     # Now it is based on filtered tracer but this needs to be tested, smeared once
     VariableFiltered T1f T1 1
-    PhysicalParams { alpha = 1./set_density(T1, T1f) }
+    PhysicalParams { alpha = 1./set_density(T1, T1f)
+                     L=2
+                   }
     SourceViscosity set_viscosity(T1, T1f)
     
     # Simulation setup
@@ -156,115 +157,73 @@ Define FILTER 1
 
     m4_ifelse(ADAPTIVITY, 1, AdaptGradient { istep = 1 } {
                      cmax = 1E-4
-                     minlevel = 3
+                     minlevel = 4
                      # NOTE maxlevel is now infty
                  } T1
-              AdaptVorticity { istep = 1 } { maxlevel = 3 cmax = 1e-2 }
+              AdaptVorticity { istep = 1 } { minlevel=4 cmax = 1e-2 }
              )
-
 }
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
-GfsBox{bottom = Boundary {
-	   BcDirichlet U 0
-           BcDirichlet V 0}}
 #
 GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
 GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
 GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
 GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
 GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
 GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
 GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
 GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
 GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
 GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
-GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
-GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
-GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
-GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
-GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
-GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
-GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
-GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
-GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
-GfsBox{top = Boundary {
-	   BcDirichlet U 0}}
-#
+	      BcDirichlet U 0}
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
 1 2 right
 2 3 right
 3 4 right
@@ -274,56 +233,4 @@ GfsBox{top = Boundary {
 7 8 right
 8 9 right
 9 10 right
-10 11 right
-11 12 right
-12 13 right
-13 14 right
-14 15 right
-15 16 right
-16 17 right
-17 18 right
-18 19 right
-19 20 right
-20 1 right
-#
-21 22 right
-22 23 right
-23 24 right
-24 25 right
-25 26 right
-26 27 right
-27 28 right
-28 29 right
-29 30 right
-30 31 right
-31 32 right
-32 33 right
-33 34 right
-34 35 right
-35 36 right
-36 37 right
-37 38 right
-38 39 right
-39 40 right
-40 21 right
-#
-1 21 top
-2 22 top
-3 23 top
-4 24 top
-5 25 top
-6 26 top
-7 27 top
-8 28 top
-9 29 top
-10 30 top
-11 31 top
-12 32 top
-13 33 top
-14 34 top
-15 35 top
-16 36 top
-17 37 top
-18 38 top 
-19 39 top
-20 40 top
+10 1 right
