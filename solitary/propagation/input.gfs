@@ -117,50 +117,28 @@ Define FILTER 1
     OutputTime {istep = 1} stdout
     
     # By step count, for time see times
-    OutputSimulation { start=0 step=0.01 } ./data/fields-AMPLITUDE-%ld.vtk { format=VTK }
-    OutputTime { start=0 istep=1 } ./data/times-AMPLITUDE.txt
+    OutputSimulation { step=0.01 } fields-%ld.vtk { format=VTK }
+    OutputTime { istep=1 } times.txt
 
     VariablePosition {} Y T1 y
     VariablePosition {} X T1 x
     # Maximum of Y coords that are on the interface is ... the height :)
-    OutputScalarNorm { istep = 1} ./data/yposition-AMPLITUDE.txt  { v = (T1 > 1e-6 && T1 < 1. - 1e-6 ? y : 0.) format=%.16e}
-    OutputParticle { istep = 1} ./data/xposition-AMPLITUDE.txt  0 1 0
+    OutputScalarNorm { istep = 1} yposition.txt { v = (T1 > 1e-6 && T1 < 1. - 1e-6 ? y : 0.) format=%.16e}
+    OutputParticle { istep = 1} xposition.txt  0 1 0
     # In both water and air
-    OutputScalarSum { istep = 1} ./data/mass-AMPLITUDE.txt { v=set_density(T1, T1f)*T1 format=%.16e}
-    OutputScalarSum { istep = 1} ./data/kinetic-AMPLITUDE.txt { v = Velocity2*set_density(T1, T1f)*T1 format=%.16e}
-    OutputScalarSum { istep = 1} ./data/potential-AMPLITUDE.txt { v = y*gravity*set_density(T1, T1f)*T1 format=%.16e}
+    OutputScalarSum { istep = 1} mass.txt { v=set_density(T1, T1f)*T1 format=%.16e}
+    OutputScalarSum { istep = 1} kinetic.txt { v = Velocity2*set_density(T1, T1f)*T1 format=%.16e}
+    OutputScalarSum { istep = 1} potential.txt { v = y*gravity*set_density(T1, T1f)*T1 format=%.16e}
 
     # Some idea about cell counts
-    OutputAdaptStats { istep = 1 } ./data/adaptstats-AMPLITUDE.txt
-
-    # Cleanup
-    EventScript { start=end } {
-	if [ $GfsPid -le 0 ]
-	then
-	    AMPL__=AMPLITUDE
-            SAVEDIR="./data/ampl""$AMPL__"
-
-	    echo "SEE $SAVEDIR FOR RESULTS"
-
-	    if [ ! -d $SAVEDIR ]
-	    then
-	    	mkdir -p $SAVEDIR
-	    fi
-
-	    mv ./data/fields-AMPLITUDE-*.vtk $SAVEDIR
-	    for f in times yposition xposition mass kinetic potential adaptstats;
-	    do
-		mv ./data/$f-AMPLITUDE.txt $SAVEDIR;
-	    done
-	fi
-    }
+    OutputAdaptStats { istep = 1 } adaptstats.txt
 
     m4_ifelse(ADAPTIVITY, 1, AdaptGradient { istep = 1 } {
                      cmax = 1E-4
                      minlevel = 4
                      # NOTE maxlevel is now infty
                  } T1
-              AdaptVorticity { istep = 1 } { minlevel=4 cmax = 1e-2 }
+              AdaptVorticity { istep = 1 } { minlevel=4 cmax = 1e-4 }
              )
 }
 #
