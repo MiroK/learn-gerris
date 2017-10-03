@@ -1,8 +1,8 @@
 Define FILTER 1
-Define MINLEVEL 4
 Define MAXLEVEL 8
+Define MINLEVEL 4
 
-10 10 GfsSimulation GfsBox GfsGEdge {} {
+23 22 GfsSimulation GfsBox GfsGEdge {} {
     Global{
 	double air_density = 1.;
 	double water_density = 1000.;
@@ -71,7 +71,7 @@ Define MAXLEVEL 8
     }
     # Shift coords to have left wall at x=0 and bottom at y = 0.
     # This are axis for which Ramaswamy has the formulas
-    MapTransform{tx=-3.5 ty=0.5}
+    MapTransform{tx=-4.5 ty=0.5}
     
     GfsAdvectionParams {                                                            
 	cfl = 0.5
@@ -94,6 +94,12 @@ Define MAXLEVEL 8
     ProjectionParams { tolerance = 1e-3 }
 
     Refine( ((y > depth-0.1) && (y < depth + amplitude+0.1)) ? MAXLEVEL : MINLEVEL)
+
+    Solid ({
+        return (y - (x-20)/16);
+    })
+    RefineSolid MAXLEVEL
+
     # Things start from rest
     Init {} {
         T1 = tracer_init(depth, amplitude, x, y)             
@@ -110,7 +116,7 @@ Define MAXLEVEL 8
     SourceViscosity set_viscosity(T1, T1f)
     
     # Simulation setup
-    Time { end=10 dtmax=5E-3 }
+    Time { end=15 dtmax=5E-3 }
 
     # By step count, for time see times
     # Outputs 
@@ -136,10 +142,10 @@ Define MAXLEVEL 8
 
     m4_ifelse(ADAPTIVITY, 1, AdaptGradient { istep = 1 } {
                      cmax = 1E-4
-                     minlevel = MINLEVEL
+                     minlevel = 4
                      # NOTE maxlevel is now infty
                  } T1
-              AdaptVorticity { istep = 1 } { minlevel=MINLEVEL cmax = 1e-4 }
+              AdaptVorticity { istep = 1 } { minlevel=4 cmax = 1e-4 }
              )
 }
 #
@@ -148,58 +154,144 @@ GfsBox{top = Boundary {
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
+       }#1
+       left = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
        }}
 GfsBox{top = Boundary {
-	      BcDirichlet U 0}
+	      BcDirichlet U 0}#2
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
 GfsBox{top = Boundary {
-	      BcDirichlet U 0}
+	      BcDirichlet U 0}#3
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
 GfsBox{top = Boundary {
-	      BcDirichlet U 0}
+	      BcDirichlet U 0}#4
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
 GfsBox{top = Boundary {
-	      BcDirichlet U 0}
+	      BcDirichlet U 0}#5
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
 GfsBox{top = Boundary {
-	      BcDirichlet U 0}
+	      BcDirichlet U 0}#6
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
 GfsBox{top = Boundary {
-	      BcDirichlet U 0}
+	      BcDirichlet U 0}#7
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
 GfsBox{top = Boundary {
-	      BcDirichlet U 0}
+	      BcDirichlet U 0}#8
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
 GfsBox{top = Boundary {
-	      BcDirichlet U 0}
+	      BcDirichlet U 0}#9
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
 GfsBox{top = Boundary {
-	      BcDirichlet U 0}
+	      BcDirichlet U 0}#10
        bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}#11
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}#12
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}#13
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}#14
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}#15
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}#16
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}#17
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}#18
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}#19
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}#20
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}#21
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}#22
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }}
+GfsBox{top = Boundary {
+	      BcDirichlet U 0}#23
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }
+       right = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
@@ -212,4 +304,16 @@ GfsBox{top = Boundary {
 7 8 right
 8 9 right
 9 10 right
-10 1 right
+10 11 right
+11 12 right
+12 13 right
+13 14 right
+14 15 right
+15 16 right
+16 17 right
+17 18 right
+18 19 right
+19 20 right
+20 21 right
+21 22 right
+22 23 right
