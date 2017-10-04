@@ -1,0 +1,303 @@
+# Gerris Flow Solver 3D version 1.3.2 (131206-155120)
+11 10 GfsSimulation GfsBox GfsGEdge { version = 131206 } {
+  GfsGlobal {
+	double air_density = 1.;
+	double water_density = 1000.;
+
+        double air_viscosity = 1E-5;  // dynamic
+        double water_viscosity = 1E-3;
+        
+        double gravity = -9.81;
+        // Note that this effects coordinate shift
+        double depth = 1;
+        double amplitude = 0.4;
+        
+	double var(double T, double Tf, double min, double max){
+	    if(1 > 0.5)  // True for 1.0 use filter
+	        return min + CLAMP(Tf, 0, 1)*(max - min);
+	    else
+		return min + CLAMP(T, 0, 1)*(max - min);
+	}
+	
+	double set_density(double T, double Tf)
+	{
+	    return var(T, Tf, air_density, water_density);
+	}
+
+	double set_viscosity(double T, double Tf)
+	{
+	    return var(T, Tf, air_viscosity, water_viscosity);
+	}
+        
+        // Init profile following Ramaswamy @ JFP 90, 396-430
+	double get_height(double d, double H, double t, double x)
+	{
+            const double x0 = 4; 
+            const double g = fabs(gravity); 
+            const double c = sqrt(g*d*(1. + H/d));
+  	    double eta = H/pow(cosh(sqrt(3*H/4/pow(d, 3.))*(x-x0-c*t)), 2);
+            return eta;
+	}
+
+	double tracer_init(double d, double H, double x, double z)
+	{
+	    return (z > get_height(d, H, 0.0, x)) ? 0. : 1.;
+	}
+
+        double get_U(double d, double H, double t, double x, double z)
+        {
+            const double x0 = 4;
+            const double g = fabs(gravity); 
+            const double c = sqrt(g*d*(1. + H/d));
+  	    double surface = get_height(d, H, t, x);
+            const double arg = sqrt(3*H/4/pow(d, 3))*(x-x0-c*t);
+            double u = sqrt(g*d)*H/d/pow(cosh(arg), 2);
+            
+            return (z > surface) ? 0.0 : u;
+        }
+
+        double get_W(double d, double H, double t, double x, double z)
+        {
+            const double x0 = 4;
+            const double g = fabs(gravity); 
+            const double c = sqrt(g*d*(1. + H/d));
+  	    double surface = get_height(d, H, t, x);
+
+            const double arg = sqrt(3*H/4/pow(d, 3))*(x-x0-c*t);
+            double v = sqrt(3*g*d)*pow(H/d, 1.5)*((z+d)/d)/pow(cosh(arg), 2)*tanh(arg);
+            
+            return (z > surface) ? 0.0 : v;
+        }
+    }
+  GfsTime { i = 0 t = 0 end = 15 dtmax = 0.005 }
+  GfsRefine ( ((y > -0.1) && (y < amplitude+0.1)) ? 5 : 4)
+  GfsRefineSolid 7
+  GfsRefine ( ((fabs(x-20)-0.25) < 0.25) ? 7 : 4 )
+  GfsMetricStretch { istep = 1 } { sx = 1 sy = 1 sz = 0.5 }
+  GfsVariableTracerVOF { istep = 1073741823 } T1 {
+  cfl      = 0.5
+  gradient = gfs_center_van_leer_gradient
+  flux     = gfs_face_advection_flux
+  average  = 0
+  scheme   = godunov
+}
+  GfsSource { istep = 1 } V gravity
+  GfsSolid { istep = 1073741823 } ( {
+       return (y <= -1+1.8) ? (pow(x-18, 2)+pow(z, 2)-pow(0.2, 2)) : y-(1.8-1);
+    } ) {}
+  GfsInit { } {
+  T1 = tracer_init(depth, amplitude, x, y)
+  U = get_U(depth, amplitude, 0.0, x, y)
+  V = get_W(depth, amplitude, 0.0, x, y)
+}
+  GfsVariableFiltered { istep = 1 } T1f T1 1
+  GfsSourceViscosity { istep = 1 } set_viscosity(T1, T1f) {
+  tolerance = 1e-06
+  nrelax    = 4
+  erelax    = 1
+  minlevel  = 0
+  nitermax  = 100
+  nitermin  = 1
+  weighted  = 0
+  beta      = 1
+}
+  GfsOutputProjectionStats { istep = 11 } stdout
+  GfsOutputTime { istep = 1 } stdout
+  GfsOutputSimulation { istep = 1 } fields-%ld.vtk { format = VTK }
+  GfsOutputTime { istep = 1 } times.txt
+  GfsOutputScalarSum { istep = 1 } mass.txt { v =  set_density(T1, T1f)*T1 format = %.16e }
+  GfsOutputScalarSum { istep = 1 } kinetic.txt { v =  Velocity2*set_density(T1, T1f)*T1 format = %.16e }
+  GfsOutputScalarSum { istep = 1 } potential.txt { v =  y*gravity*set_density(T1, T1f)*T1 format = %.16e }
+  GfsOutputDropletSums { istep = 1 } drops.txt { v =  T1*dV } T1
+  GfsOutputAdaptStats { istep = 1 } adaptstats.txt
+  GfsPhysicalParams { g = 1 L = 2 alpha = 1./set_density(T1, T1f) }
+  GfsAdvectionParams {
+  cfl      = 0.5
+  gradient = gfs_center_superbee_gradient
+  flux     = gfs_face_velocity_advection_flux
+  average  = 1
+  scheme   = godunov
+}
+  GfsApproxProjectionParams {
+  tolerance = 0.001
+  nrelax    = 4
+  erelax    = 1
+  minlevel  = 0
+  nitermax  = 100
+  nitermin  = 1
+  weighted  = 0
+  beta      = 1
+}
+  GfsProjectionParams {
+  tolerance = 0.001
+  nrelax    = 4
+  erelax    = 1
+  minlevel  = 0
+  nitermax  = 100
+  nitermin  = 1
+  weighted  = 0
+  beta      = 1
+}
+
+}
+GfsBox { id = 1 pid = 3 size = 1 x = 0 y = 0 z = 0 left = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} bottom = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} front = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} back = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} }
+GfsBox { id = 2 pid = 0 size = 1 x = 1 y = 0 z = 0 bottom = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} front = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} back = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} }
+GfsBox { id = 3 pid = 0 size = 1 x = 2 y = 0 z = 0 bottom = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} front = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} back = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} }
+GfsBox { id = 4 pid = 0 size = 1 x = 3 y = 0 z = 0 bottom = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} front = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} back = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} }
+GfsBox { id = 5 pid = 1 size = 1 x = 4 y = 0 z = 0 bottom = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} front = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} back = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} }
+GfsBox { id = 6 pid = 1 size = 1 x = 5 y = 0 z = 0 bottom = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} front = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} back = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} }
+GfsBox { id = 7 pid = 1 size = 1 x = 6 y = 0 z = 0 bottom = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} front = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} back = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} }
+GfsBox { id = 8 pid = 1 size = 1 x = 7 y = 0 z = 0 bottom = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} front = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} back = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} }
+GfsBox { id = 9 pid = 2 size = 1 x = 8 y = 0 z = 0 bottom = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} front = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} back = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} }
+GfsBox { id = 10 pid = 2 size = 1 x = 9 y = 0 z = 0 bottom = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} front = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} back = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} }
+GfsBox { id = 11 pid = 2 size = 1 x = 10 y = 0 z = 0 right = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} bottom = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} front = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} back = GfsBoundary {
+GfsBcDirichlet W 0
+GfsBcDirichlet U 0
+GfsBcDirichlet V 0
+} }
+1 2 right
+2 3 right
+3 4 right
+4 5 right
+5 6 right
+6 7 right
+7 8 right
+8 9 right
+9 10 right
+10 11 right
