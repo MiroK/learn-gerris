@@ -1,0 +1,109 @@
+2 1 GfsSimulation GfsBox GfsGEdge {} {
+
+    Global{
+	double air_density = 1;
+	double water_density = 1000;
+	double air_viscosity = 1.8E-2;
+	double water_viscosity = 1;
+	double gravity = -1;
+	double sigma = 78E-3*SIGMA;
+	
+	double tracer_init(double x, double y){
+	    return ((x > 0.10) && (x < 0.40) && (y < (-0.5*0.5+0.35))) ? 1. : 0.;
+	}
+
+	double var(double T, double Tf, double min, double max){
+	    if(FILTER > 0.5)  // True for 1.0 use filter
+	      return min + CLAMP(Tf, 0, 1)*(max - min);
+	    else
+	      return min + CLAMP(T, 0, 1)*(max - min);
+	}
+	
+	double set_density(double T, double Tf)
+	{
+	    return var(T, Tf, air_density, water_density);
+	}
+
+	double set_viscosity(double T, double Tf)
+	{
+	    return var(T, Tf, air_viscosity, water_viscosity);
+	}
+    }
+    MetricStretch {} { sy=0.5 sx=0.5}
+    Refine 8
+    
+    GfsAdvectionParams {                                                            
+        cfl = 0.5
+        gradient = gfs_center_superbee_gradient
+    }     
+    
+    # Surface tracking
+    VariableTracerVOFHeight T1
+
+    # Things start from rest
+    Init {} {
+	U = 0
+	V = 0
+	T1 = tracer_init(x, y)
+    }
+
+    # Variable density and viscosity for the two fluids
+    # Now it is based on filtered tracer but this needs to be tested
+    VariableFiltered T1f T1 1
+    PhysicalParams { alpha = 1./set_density(T1, T1f) }
+    SourceViscosity set_viscosity(T1, T1f)
+
+    # Gravity
+    Source {} V gravity
+
+    # BAsed on unfiltered
+    VariableCurvature K T1
+    SourceTension T1 sigma K
+    
+    # Solver setup
+    ApproxProjectionParams { tolerance = 1e-3 }
+    ProjectionParams { tolerance = 1e-3 }
+
+    # Simulation setup
+    Time { end = 5 dtmax=5E-3 }
+
+    # Outputs 
+    OutputProjectionStats { istep = 10 } stdout
+    OutputTime {istep = 1} stdout
+
+    # Has time
+    OutputDropletSums { istep = 5 } drops.txt  { v = T1*dV   } T1
+    # By step count, for time see times
+    OutputSimulation { start=0 step = 0.05 } output-%ld.vtk { format=VTK }
+    OutputTime { start=0 istep=1 } times.txt
+}
+# Aquarium
+GfsBox {
+    bottom = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    left = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    top = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+}
+GfsBox {
+    top = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    right = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+    bottom = Boundary {
+	BcDirichlet U 0
+	BcDirichlet V 0
+    }
+}
+1 2 right
