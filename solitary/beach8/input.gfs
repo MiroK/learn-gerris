@@ -1,5 +1,5 @@
 Define FILTER 1
-Define MAXLEVEL 8
+Define MAXLEVEL 7
 Define MINLEVEL 4
 
 19 18 GfsSimulation GfsBox GfsGEdge {} {
