@@ -1,8 +1,9 @@
 Define FILTER 1
-Define MAXLEVEL 5
-Define MINLEVEL 4
+Define MAXLEVEL 7
+Define MINLEVEL 5
+Define SUPLEVEL 9
 
-28 31 GfsSimulation GfsBox GfsGEdge {} {
+34 40 GfsSimulation GfsBox GfsGEdge {} {
     Global{
 	double air_density = 1.;
 	double water_density = 1000.;
@@ -94,7 +95,7 @@ Define MINLEVEL 4
     ProjectionParams { tolerance = 1e-3 }
 
     # Let's refine in the breaking region
-    Refine((x > 24) ? MAXLEVEL : MINLEVEL)
+    Refine((x > 24) ? SUPLEVEL : MINLEVEL)
 
     # Iface refine
     Refine( ((y > depth-0.1) && (y < depth + amplitude+0.1)) ? MAXLEVEL : MINLEVEL)
@@ -102,7 +103,7 @@ Define MINLEVEL 4
     Solid ({
         return (y - (x-20)/8);
     })
-    RefineSolid MAXLEVEL
+    RefineSolid SUPLEVEL
 
     # Things start from rest
     Init {} {
@@ -110,6 +111,8 @@ Define MINLEVEL 4
 	U = get_U(depth, amplitude, 0.0, x, y)
 	V = get_V(depth, amplitude, 0.0, x, y)
     }
+    SurfaceBc U Dirichlet { return (y-(x-20)/8.); }
+    SurfaceBc V Dirichlet { return (y-(x-20)/8.); }
 
     # Variable density and viscosity for the two fluids
     # Now it is based on filtered tracer but this needs to be tested, smeared once
@@ -120,7 +123,7 @@ Define MINLEVEL 4
     SourceViscosity set_viscosity(T1, T1f)
     
     # Simulation setup
-    Time { end=15 dtmax=5E-3 }
+    Time { end=15 dtmax=5E-3 }#15
 
     # By step count, for time see times
     # Outputs 
@@ -144,123 +147,105 @@ Define MINLEVEL 4
     # Some idea about cell counts
     OutputAdaptStats { istep = 1 } adaptstats.txt
 
-    m4_ifelse(ADAPTIVITY, 1, AdaptGradient { istep = 1 } {
-                     cmax = 1E-4
-                     minlevel = 4
-                     # NOTE maxlevel is now infty
-                 } T1
-              AdaptVorticity { istep = 1 } { minlevel=4 cmax = 1e-4 }
-             )
+    #m4_ifelse(ADAPTIVITY, 1, AdaptGradient { istep = 1 } {
+    #                 cmax = 1E-4
+    #                 minlevel = 4
+    #                 # NOTE maxlevel is now infty
+    #             } T1
+    #          AdaptVorticity { istep = 1 } { minlevel=4 cmax = 1e-4 }
+    #         )
 }
 #
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}
+GfsBox{#1
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
-       }#1
+       }
        left = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}#2
+GfsBox{#2	
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}#3
+GfsBox{#3
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}#4
+GfsBox{#4
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}#5
+GfsBox{#5
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}#6
+GfsBox{#6
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}#7
+GfsBox{#7
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}#8
+GfsBox{#8
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}#9
+GfsBox{#9
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}#10
+GfsBox{#10
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}#11
+GfsBox{#11
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}#12
+GfsBox{#12
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}#13
+GfsBox{#13
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}#14
+GfsBox{#14
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}#15
+GfsBox{#15
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}#16
+GfsBox{#16
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}#17
+GfsBox{#17
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
        }}
-GfsBox{top = Boundary {
-	      BcDirichlet U 0}#18
+GfsBox{#18
        bottom = Boundary {
            BcDirichlet U 0
            BcDirichlet V 0
@@ -303,6 +288,30 @@ GfsBox{#26
 GfsBox{#27
       }
 GfsBox{#28
+      }
+GfsBox{#29
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }
+      }
+GfsBox{#30
+       bottom = Boundary {
+           BcDirichlet U 0
+           BcDirichlet V 0
+       }
+       right = Boundary{
+        BcDirichlet U 0
+        BcDirichlet V 0
+    }
+}
+GfsBox{#31
+      }
+GfsBox{#32
+      }
+GfsBox{#33
+      }
+GfsBox{#34
     right = Boundary{
         BcDirichlet U 0
         BcDirichlet V 0
@@ -330,12 +339,23 @@ GfsBox{#28
 20 21 right
 21 22 right
 22 23 right
+#
 24 25 right
 25 26 right
 26 27 right
 27 28 right
+28 29 right
+29 30 right
+31 32 right
+32 33 right
+33 34 right
+#
 19 24 top
 20 25 top
 21 26 top
 22 27 top
 23 28 top
+27 31 top
+28 32 top
+29 33 top
+30 34 top
