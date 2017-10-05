@@ -111,8 +111,8 @@ Define SUPLEVEL 9
 	U = get_U(depth, amplitude, 0.0, x, y)
 	V = get_V(depth, amplitude, 0.0, x, y)
     }
-    SurfaceBc U Dirichlet { return (y-(x-20)/8.); }
-    SurfaceBc V Dirichlet { return (y-(x-20)/8.); }
+    SurfaceBc U Dirichlet 0
+    SurfaceBc V Dirichlet 0
 
     # Variable density and viscosity for the two fluids
     # Now it is based on filtered tracer but this needs to be tested, smeared once
